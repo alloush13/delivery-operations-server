@@ -17,7 +17,7 @@ Backend service built with **Node.js + TypeScript + Express + Socket.IO + MongoD
 ### 1. Clone project
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/alloush13/delivery-operations-server.git
 cd delivery-operations-server
 ```
 ### 2. Build & Run
