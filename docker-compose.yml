@@ -1,0 +1,41 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: node_app
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    container_name: mongo_db
+    restart: always
+    ports:
+    - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongo:27017/
+      ME_CONFIG_BASICAUTH_ENABLED: true
+      ME_CONFIG_BASICAUTH_USERNAME: alloush
+      ME_CONFIG_BASICAUTH_PASSWORD: alloush
+
+
+volumes:
+  mongo_data:

@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Socket Test - Technician</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #0f172a;
+        --panel: rgba(15, 23, 42, 0.78);
+        --panel-strong: #111827;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --line: rgba(148, 163, 184, 0.2);
+        --accent: #22c55e;
+        --accent-2: #38bdf8;
+        --warn: #f59e0b;
+        --danger: #ef4444;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Arial, Helvetica, sans-serif;
+        background:
+          radial-gradient(circle at top right, rgba(56, 189, 248, 0.22), transparent 30%),
+          radial-gradient(circle at bottom left, rgba(34, 197, 94, 0.18), transparent 28%),
+          linear-gradient(160deg, #020617, var(--bg));
+        color: var(--text);
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 40px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        width: fit-content;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.55);
+        color: var(--accent-2);
+        font-size: 13px;
+        letter-spacing: 0.02em;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 48px);
+        line-height: 1.1;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        max-width: 760px;
+        line-height: 1.8;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 20px;
+      }
+
+      .card {
+        background: linear-gradient(180deg, rgba(17, 24, 39, 0.92), rgba(15, 23, 42, 0.88));
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .card-header {
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .card-header h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .badge {
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        background: rgba(148, 163, 184, 0.12);
+        color: var(--muted);
+      }
+
+      .badge.connected {
+        color: #bbf7d0;
+        background: rgba(34, 197, 94, 0.16);
+      }
+
+      .badge.disconnected {
+        color: #fecaca;
+        background: rgba(239, 68, 68, 0.15);
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .row {
+        display: grid;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+
+      .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button,
+      input,
+      textarea {
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 14px;
+        background: rgba(2, 6, 23, 0.65);
+        color: var(--text);
+        font: inherit;
+      }
+
+      button {
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(56, 189, 248, 0.5);
+      }
+
+      button.primary {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.92), rgba(56, 189, 248, 0.9));
+        color: #fff;
+        border-color: transparent;
+      }
+
+      button.secondary {
+        background: rgba(148, 163, 184, 0.1);
+      }
+
+      button.danger {
+        background: rgba(239, 68, 68, 0.16);
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px 14px;
+        outline: none;
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .stat {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(2, 6, 23, 0.45);
+      }
+
+      .stat .label {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .stat .value {
+        margin-top: 6px;
+        font-size: 15px;
+        word-break: break-word;
+      }
+
+      .log {
+        height: 420px;
+        overflow: auto;
+        padding: 16px;
+        background: rgba(2, 6, 23, 0.55);
+        border-top: 1px solid var(--line);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .log-item {
+        padding: 8px 10px;
+        margin-bottom: 10px;
+        border-radius: 12px;
+        background: rgba(148, 163, 184, 0.08);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .log-item.ok {
+        border-color: rgba(34, 197, 94, 0.22);
+      }
+
+      .log-item.err {
+        border-color: rgba(239, 68, 68, 0.26);
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.7;
+        margin-top: 10px;
+      }
+
+      @media (max-width: 920px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stats {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hero">
+        <div class="eyebrow">Socket.io Test Panel</div>
+        <h1>Technician Socket Test Console</h1>
+        <p class="subtitle">
+          Use the buttons below to test connect, disconnect, send a sample location, or emit a custom event to the server.
+        </p>
+      </div>
+
+      <div class="grid">
+        <section class="card">
+          <div class="card-header">
+            <h2>Testing Tools</h2>
+            <span id="connectionBadge" class="badge disconnected">Disconnected</span>
+          </div>
+          <div class="content">
+            <div class="row buttons">
+              <button id="connectBtn" class="primary">Connect</button>
+              <button id="disconnectBtn" class="danger">Disconnect</button>
+              <button id="sendLocationBtn" class="secondary">Send Location</button>
+              <button id="pingBtn" class="secondary">Send Ping</button>
+            </div>
+
+            <div class="row">
+              <label>
+                Custom Event Name
+                <input id="eventName" type="text" value="test:event" />
+              </label>
+              <label>
+                Custom Event Payload (JSON)
+                <textarea id="eventPayload">{
+  "message": "hello from technician"
+}</textarea>
+              </label>
+              <button id="sendCustomBtn" class="primary">Send Custom Event</button>
+            </div>
+
+            <div class="stats">
+              <div class="stat">
+                <div class="label">Session ID</div>
+                <div id="socketId" class="value">-</div>
+              </div>
+              <div class="stat">
+                <div class="label">Last Status</div>
+                <div id="lastState" class="value">Ready</div>
+              </div>
+            </div>
+
+            <div class="hint">
+              Server: http://localhost:5000<br />
+              Token is currently embedded for local testing only.
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Event Log</h2>
+            <span class="badge">Live</span>
+          </div>
+          <div id="log" class="log"></div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const serverUrl = "http://localhost:5000";
+      const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZTc0NjJhZGRmNzY4NGVhMzMwNjMwNiIsInJvbGUiOiJ0ZWNobmljaWFuIiwiaWF0IjoxNzc2NzY0NDU4LCJleHAiOjE3NzczNjkyNTh9.uMLLw90Dej0FzC4MrEREGgVdksBZlkW3v7YhTId8zCs";
+
+      let socket = null;
+
+      const connectBtn = document.getElementById("connectBtn");
+      const disconnectBtn = document.getElementById("disconnectBtn");
+      const sendLocationBtn = document.getElementById("sendLocationBtn");
+      const pingBtn = document.getElementById("pingBtn");
+      const sendCustomBtn = document.getElementById("sendCustomBtn");
+      const connectionBadge = document.getElementById("connectionBadge");
+      const socketIdLabel = document.getElementById("socketId");
+      const lastStateLabel = document.getElementById("lastState");
+      const logContainer = document.getElementById("log");
+      const eventNameInput = document.getElementById("eventName");
+      const eventPayloadInput = document.getElementById("eventPayload");
+
+      function log(message, type = "ok") {
+        const entry = document.createElement("div");
+        entry.className = `log-item ${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logContainer.prepend(entry);
+      }
+
+      function setStatus(connected, stateText) {
+        connectionBadge.textContent = connected ? "Connected" : "Disconnected";
+        connectionBadge.classList.toggle("connected", connected);
+        connectionBadge.classList.toggle("disconnected", !connected);
+        lastStateLabel.textContent = stateText;
+        socketIdLabel.textContent = socket?.id || "-";
+      }
+
+      function ensureSocket() {
+        if (socket) {
+          return socket;
+        }
+
+        socket = io(serverUrl, {
+          auth: {
+            token: authToken,
+            role: "technician"
+          },
+          autoConnect: false
+        });
+
+        socket.on("connect", () => {
+          log(`Connected successfully: ${socket.id}`);
+          setStatus(true, "Connected");
+        });
+
+        socket.on("disconnect", (reason) => {
+          log(`Disconnected: ${reason}`, "err");
+          setStatus(false, `Disconnected: ${reason}`);
+        });
+
+        socket.on("connect_error", (err) => {
+          log(`Connection error: ${err.message}`, "err");
+          setStatus(false, `Connection error: ${err.message}`);
+        });
+
+        socket.onAny((eventName, ...args) => {
+          log(`Event received: ${eventName} -> ${JSON.stringify(args)}`);
+        });
+
+        return socket;
+      }
+
+      function connectSocket() {
+        const activeSocket = ensureSocket();
+        if (!activeSocket.connected) {
+          log("Connecting to server...");
+          activeSocket.connect();
+        } else {
+          log("Socket is already connected");
+        }
+      }
+
+      function disconnectSocket() {
+        if (!socket) {
+          log("No active connection", "err");
+          return;
+        }
+
+        socket.disconnect();
+      }
+
+      function sendLocation() {
+        const activeSocket = ensureSocket();
+        if (!activeSocket.connected) {
+          log("You must connect before sending location", "err");
+          return;
+        }
+
+        const payload = {
+          lat: 33.5138,
+          lng: 36.2764
+        };
+       
+
+        activeSocket.emit("location:update", payload, (response) => {
+          log(`Server response to location:update: ${JSON.stringify(response)}`);
+        });
+        log(`Sent location:update -> ${JSON.stringify(payload)}`);
+      }
+
+      function sendPing() {
+        const activeSocket = ensureSocket();
+        if (!activeSocket.connected) {
+          log("You must connect before sending Ping", "err");
+          return;
+        }
+
+        activeSocket.emit("ping", { time: Date.now() }, (response) => {
+          log(`Server response to ping: ${JSON.stringify(response)}`);
+        });
+        log("Sent ping");
+      }
+
+      function sendCustomEvent() {
+        const activeSocket = ensureSocket();
+        if (!activeSocket.connected) {
+          log("You must connect before sending custom event", "err");
+          return;
+        }
+
+        const eventName = eventNameInput.value.trim();
+        if (!eventName) {
+          log("Custom event name is empty", "err");
+          return;
+        }
+
+        let payload;
+        try {
+          payload = JSON.parse(eventPayloadInput.value);
+        } catch (error) {
+          log("Invalid JSON in custom event payload", "err");
+          return;
+        }
+
+        activeSocket.emit(eventName, payload, (response) => {
+          log(`Server response to ${eventName}: ${JSON.stringify(response)}`);
+        });
+        log(`Sent ${eventName} -> ${JSON.stringify(payload)}`);
+      }
+
+      connectBtn.addEventListener("click", connectSocket);
+      disconnectBtn.addEventListener("click", disconnectSocket);
+      sendLocationBtn.addEventListener("click", sendLocation);
+      pingBtn.addEventListener("click", sendPing);
+      sendCustomBtn.addEventListener("click", sendCustomEvent);
+
+      setStatus(false, "Ready for testing");
+      log("Console is ready. Click Connect to start testing.");
+    </script>
+  </body>
+</html>
